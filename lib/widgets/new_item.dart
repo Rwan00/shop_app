@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:shop_app_00/models/category.dart';
 
 import '../data/categories.dart';
 
@@ -11,6 +14,9 @@ class NewItem extends StatefulWidget {
 
 class _NewItemState extends State<NewItem> {
   final _formKey = GlobalKey<FormState>();
+  String _enteredName = "";
+  int _enteredQuantity = 0;
+  Category _selectedCategory = categories[Categories.fruit]!;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,6 +34,10 @@ class _NewItemState extends State<NewItem> {
                   labelText: "Name",
                 ),
                 maxLength: 50,
+                onSaved: (newValue)
+                {
+                  _enteredName = newValue!;
+                },
                 validator: (value) {
                   if (value == null ||
                       value.isEmpty ||
@@ -48,6 +58,10 @@ class _NewItemState extends State<NewItem> {
                           labelText: "Quantity",
                         ),
                         initialValue: "1",
+                        onSaved: (newValue)
+                        {
+                          _enteredQuantity = int.parse(newValue!);
+                        },
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null ||
@@ -64,6 +78,7 @@ class _NewItemState extends State<NewItem> {
                   const SizedBox(width: 8,),
                   Expanded(
                       child: DropdownButtonFormField(
+                        value: _selectedCategory,
                         items: [
                           for(final category in categories.entries)
                             DropdownMenuItem(
@@ -82,7 +97,9 @@ class _NewItemState extends State<NewItem> {
                             ),
                         ],
                         onChanged: (value){
-
+                          setState(() {
+                            _selectedCategory = value!;
+                          });
                         },
                       ),
                   ),
@@ -100,7 +117,14 @@ class _NewItemState extends State<NewItem> {
                 ),
                 ElevatedButton(
                     onPressed: (){
-                      _formKey.currentState!.validate();
+                      if(_formKey.currentState!.validate())
+                        {
+                          _formKey.currentState!.save();
+                          log(_enteredName);
+                          log(_enteredQuantity.toString());
+                          log(_selectedCategory.toString());
+                        }
+
                     },
                     child: const Text("Add Item")
                 )
