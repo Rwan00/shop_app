@@ -10,6 +10,7 @@ class NewItem extends StatefulWidget {
 }
 
 class _NewItemState extends State<NewItem> {
+  final _formKey = GlobalKey<FormState>();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,6 +18,7 @@ class _NewItemState extends State<NewItem> {
         title: const Text("Add New Item"),
       ),
       body: Form(
+        key: _formKey,
         child: Padding(
           padding: const EdgeInsets.all(12.0),
           child: Column(
@@ -46,13 +48,14 @@ class _NewItemState extends State<NewItem> {
                           labelText: "Quantity",
                         ),
                         initialValue: "1",
+                        keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null ||
                               value.isEmpty ||
-                              value.trim().length <= 1 ||
-                              value.trim().length > 50)
+                              int.tryParse(value)==null ||
+                              int.tryParse(value)! <= 0)
                           {
-                            return "Must be between 1 and 50 characters";
+                            return "Must be a valid positive number";
                           }
                           return null;
                         },
@@ -90,11 +93,15 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                    onPressed: (){},
+                    onPressed: (){
+                      _formKey.currentState!.reset();
+                    },
                     child: const Text("Reset")
                 ),
                 ElevatedButton(
-                    onPressed: (){},
+                    onPressed: (){
+                      _formKey.currentState!.validate();
+                    },
                     child: const Text("Add Item")
                 )
               ],
