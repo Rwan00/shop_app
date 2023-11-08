@@ -1,4 +1,7 @@
+import 'dart:convert';
+import 'dart:developer';
 
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:shop_app_00/models/category.dart';
@@ -117,18 +120,25 @@ class _NewItemState extends State<NewItem> {
                     child: const Text("Reset")
                 ),
                 ElevatedButton(
-                    onPressed: (){
+                    onPressed: ()async{
                       if(_formKey.currentState!.validate())
                         {
                           _formKey.currentState!.save();
-                          Navigator.of(context).pop(
-                            GroceryItem(
-                                id: DateTime.now().toString(),
-                                name: _enteredName,
-                                quantity: _enteredQuantity,
-                                category: _selectedCategory,
-                            )
-                          );
+                          var url = Uri.https("flutter-test-c119c-default-rtdb.firebaseio.com","shopping-list.json");
+                        final http.Response res =  await http.post(url,headers: {
+                            "content-type":"application/json"
+                          },body: json.encode(
+                            {
+                              "name":_enteredName,
+                              "quantity":_enteredQuantity,
+                              "category":_selectedCategory.title
+                            }
+                          ),);
+                       if(res.statusCode== 200)
+                         {
+                           Navigator.of(context).pop();
+                         }
+
                         }
 
                     },
