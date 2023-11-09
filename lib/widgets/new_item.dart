@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
 import 'package:shop_app_00/models/category.dart';
+import 'package:shop_app_00/models/grocery_item.dart';
 
 
 import '../data/categories.dart';
@@ -21,6 +22,43 @@ class _NewItemState extends State<NewItem> {
   String _enteredName = "";
   int _enteredQuantity = 0;
   Category _selectedCategory = categories[Categories.fruit]!;
+  bool _isLoading = false;
+
+  void _saveItem()
+  {
+    if(_formKey.currentState!.validate())
+    {
+      _formKey.currentState!.save();
+     setState(() {
+       _isLoading = true;
+     });
+      var url = Uri.https("flutter-test-c119c-default-rtdb.firebaseio.com","shopping-list.json");
+      http.post(url,headers: {
+        "content-type":"application/json"
+      },body: json.encode(
+          {
+            "name":_enteredName,
+            "quantity":_enteredQuantity,
+            "category":_selectedCategory.title
+          }
+      ),).then((res) {
+        final Map<String,dynamic> resData = json.decode(res.body);
+        if(res.statusCode== 200)
+        {
+          Navigator.of(context).pop(
+              GroceryItem(
+                id: resData["name"],
+                name: _enteredName,
+                quantity: _enteredQuantity,
+                category: _selectedCategory,
+              )
+          );
+        }
+      });
+
+
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -114,35 +152,14 @@ class _NewItemState extends State<NewItem> {
                 mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
-                    onPressed: (){
+                    onPressed: _isLoading ? null:(){
                       _formKey.currentState!.reset();
                     },
                     child: const Text("Reset")
                 ),
                 ElevatedButton(
-                    onPressed: ()async{
-                      if(_formKey.currentState!.validate())
-                        {
-                          _formKey.currentState!.save();
-                          var url = Uri.https("flutter-test-c119c-default-rtdb.firebaseio.com","shopping-list.json");
-                        final http.Response res =  await http.post(url,headers: {
-                            "content-type":"application/json"
-                          },body: json.encode(
-                            {
-                              "name":_enteredName,
-                              "quantity":_enteredQuantity,
-                              "category":_selectedCategory.title
-                            }
-                          ),);
-                       if(res.statusCode== 200)
-                         {
-                           Navigator.of(context).pop();
-                         }
-
-                        }
-
-                    },
-                    child: const Text("Add Item")
+                    onPressed: _isLoading? null: _saveItem,
+                    child: _isLoading? const SizedBox(height:16, width:16,child: CircularProgressIndicator(),): const Text("Add Item")
                 )
               ],
               )
