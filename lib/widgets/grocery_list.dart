@@ -16,9 +16,9 @@ class GroceryList extends StatefulWidget {
 }
 
 class _GroceryListState extends State<GroceryList> {
-   List<GroceryItem> _groceryItems = [];
-   bool _isLoading = true;
-   String? _error;
+  List<GroceryItem> _groceryItems = [];
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -32,10 +32,11 @@ class _GroceryListState extends State<GroceryList> {
       child: Text("No Item Added Yet"),
     );
 
-    if(_isLoading)
-      {
-        content = const Center(child: CircularProgressIndicator(),);
-      }
+    if (_isLoading) {
+      content = const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
 
     if (_groceryItems.isNotEmpty) {
       content = ListView.builder(
@@ -44,9 +45,7 @@ class _GroceryListState extends State<GroceryList> {
             return Dismissible(
               key: ValueKey(_groceryItems[index].id),
               onDismissed: (_) {
-                setState(() {
-                  _groceryItems.remove(_groceryItems[index]);
-                });
+                _removeItem(_groceryItems[index]);
               },
               child: ListTile(
                 title: Text(_groceryItems[index].name),
@@ -60,10 +59,11 @@ class _GroceryListState extends State<GroceryList> {
             );
           });
     }
-    if(_error != null)
-      {
-        content = Center(child: Text(_error!),);
-      }
+    if (_error != null) {
+      content = Center(
+        child: Text(_error!),
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         title: const Text("Your Grocery"),
@@ -73,17 +73,43 @@ class _GroceryListState extends State<GroceryList> {
     );
   }
 
+  void _removeItem(GroceryItem item) async {
+    final index = _groceryItems.indexOf(item);
+    setState(() {
+      _groceryItems.remove(item);
+    });
+    var url = Uri.https("flutter-test-c119c-default-rtdb.firebaseio.com",
+        "shopping-list/${item.id}.json");
+    final res = await http.delete(url);
+
+    if (res.statusCode >= 400) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("We Could Not Delete The Item")));
+      setState(() {
+        _groceryItems.insert(index, item);
+      });
+    }
+
+    if(json.decode(res.body) == null)
+      {
+        setState(() {
+          _isLoading = false;
+        });
+        return;
+      }
+
+  }
+
   void _loadData() async {
     var url = Uri.https(
         "flutter-test-c119c-default-rtdb.firebaseio.com", "shopping-list.json");
     final http.Response res = await http.get(url);
-    if(res.statusCode >= 404)
-      {
-        setState(() {
-          _error = "Failed to fetch data. Please try again later!!";
-        });
-      }
-    final Map<String,dynamic> loadedData = json.decode(res.body);
+    if (res.statusCode >= 404) {
+      setState(() {
+        _error = "Failed to fetch data. Please try again later!!";
+      });
+    }
+    final Map<String, dynamic> loadedData = json.decode(res.body);
     final List<GroceryItem> loadedItems = [];
     for (var item in loadedData.entries) {
       final Category category = categories.entries
@@ -92,16 +118,16 @@ class _GroceryListState extends State<GroceryList> {
           )
           .value;
 
-       loadedItems.add(GroceryItem(
-         id: item.key,
-         name: item.value["name"],
-         quantity: item.value["quantity"],
-         category: category,
-       ));
-       setState(() {
-         _groceryItems = loadedItems;
-         _isLoading = false;
-       });
+      loadedItems.add(GroceryItem(
+        id: item.key,
+        name: item.value["name"],
+        quantity: item.value["quantity"],
+        category: category,
+      ));
+      setState(() {
+        _groceryItems = loadedItems;
+        _isLoading = false;
+      });
     }
   }
 
@@ -112,10 +138,9 @@ class _GroceryListState extends State<GroceryList> {
       ),
     );
 
-    if(newItem == null)
-      {
-        return;
-      }
+    if (newItem == null) {
+      return;
+    }
     setState(() {
       _groceryItems.add(newItem);
     });
