@@ -88,6 +88,7 @@ class _GroceryListState extends State<GroceryList> {
       setState(() {
         _groceryItems.insert(index, item);
       });
+      return;
     }
 
     if(json.decode(res.body) == null)
@@ -103,32 +104,43 @@ class _GroceryListState extends State<GroceryList> {
   void _loadData() async {
     var url = Uri.https(
         "flutter-test-c119c-default-rtdb.firebaseio.com", "shopping-list.json");
-    final http.Response res = await http.get(url);
-    if (res.statusCode >= 404) {
-      setState(() {
-        _error = "Failed to fetch data. Please try again later!!";
-      });
-    }
-    final Map<String, dynamic> loadedData = json.decode(res.body);
-    final List<GroceryItem> loadedItems = [];
-    for (var item in loadedData.entries) {
-      final Category category = categories.entries
-          .firstWhere(
-            (element) => element.value.title == item.value['category'],
-          )
-          .value;
 
-      loadedItems.add(GroceryItem(
-        id: item.key,
-        name: item.value["name"],
-        quantity: item.value["quantity"],
-        category: category,
-      ));
+      try{
+        final http.Response res = await http.get(url);
+        if (res.statusCode >= 404) {
+          setState(() {
+            _error = "Failed to fetch data. Please try again later!!";
+          });
+        }
+        final Map<String, dynamic> loadedData = json.decode(res.body);
+        final List<GroceryItem> loadedItems = [];
+        for (var item in loadedData.entries) {
+          final Category category = categories.entries
+              .firstWhere(
+                (element) => element.value.title == item.value['category'],
+          )
+              .value;
+
+          loadedItems.add(GroceryItem(
+            id: item.key,
+            name: item.value["name"],
+            quantity: item.value["quantity"],
+            category: category,
+          ));
+          setState(() {
+            _groceryItems = loadedItems;
+            _isLoading = false;
+          });
+        }
+      }
+      catch(err)
+    {
       setState(() {
-        _groceryItems = loadedItems;
-        _isLoading = false;
+        _error = "Something Went Wrong. Please try again later!!";
       });
     }
+
+
   }
 
   _addItem() async {
